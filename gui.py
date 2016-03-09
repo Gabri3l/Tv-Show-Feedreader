@@ -1,5 +1,6 @@
 import wx
 import psutil
+import urllib2
 
 
 class WindowClass(wx.Frame):
@@ -69,6 +70,8 @@ class WindowClass(wx.Frame):
 
         def on_start(event):
             check_vpn()
+            # The request has to start only if vpn is active
+            request_xml('https://eztv.ag/ezrss.xml')
 
         panel = wx.Panel(self, wx.ID_ANY)
 
@@ -93,6 +96,21 @@ class WindowClass(wx.Frame):
         # modal
         show_box = wx.TextEntryDialog(None, 'What show would you like to add?', 'Add Show', 'Show name')
         del_show_box = wx.TextEntryDialog(None, 'Which show would you like to remove?', 'Del Show', 'Show name')
+
+
+def request_xml(site):
+    # Only user agent is actually needed to fulfill the request
+    hdr = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
+           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+           'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
+           'Accept-Encoding': 'none',
+           'Accept-Language': 'en-US,en;q=0.8',
+           'Connection': 'keep-alive'}
+    req = urllib2.Request(site, headers=hdr)
+    response = urllib2.urlopen(req)
+    html = response.read()
+    response.close()
+    print html
 
 if __name__ == '__main__':
     app = wx.App()
