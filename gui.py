@@ -1,6 +1,8 @@
 import wx
 import psutil
 import urllib2
+import re
+import xml.etree.ElementTree as ET
 
 
 class WindowClass(wx.Frame):
@@ -70,8 +72,18 @@ class WindowClass(wx.Frame):
 
         def on_start(event):
             check_vpn()
-            # The request has to start only if vpn is active
-            request_xml('https://eztv.ag/ezrss.xml')
+            # TODO The request has to start only if vpn is active
+            show_list_root = ET.fromstring(request_xml('https://eztv.ag/ezrss.xml')).find('channel')
+
+            for child in show_list_root.findall('item'):
+                title = child.find('title').text
+                try:
+                    # This is a temp regex solution that looks for patterns like s09e01 which
+                    # is the standard when naming a tv show file
+                    match = re.search(r's[0-9]{2}e[0-9]{2}', title, re.IGNORECASE).group(0)
+                    filtered_title = title.split(match)[0].title().strip()
+                except AttributeError:
+                    filtered_title = title
 
         panel = wx.Panel(self, wx.ID_ANY)
 
@@ -108,9 +120,9 @@ def request_xml(site):
            'Connection': 'keep-alive'}
     req = urllib2.Request(site, headers=hdr)
     response = urllib2.urlopen(req)
-    html = response.read()
+    xml = response.read()
     response.close()
-    print html
+    return xml
 
 if __name__ == '__main__':
     app = wx.App()
