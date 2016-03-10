@@ -3,6 +3,7 @@ import psutil
 import urllib2
 import re
 import xml.etree.ElementTree as ET
+import os
 
 
 class WindowClass(wx.Frame):
@@ -12,6 +13,7 @@ class WindowClass(wx.Frame):
         self.add_gui()
         self.Center()
         self.Show()
+        self.favourite_shows = []
 
     def add_gui(self):
 
@@ -43,15 +45,17 @@ class WindowClass(wx.Frame):
 
         def on_add_show(event):
             if show_box.ShowModal() == wx.ID_OK:
-                new_show = show_box.GetValue()
+                new_show = show_box.GetValue().title().strip()
                 if tv_show_text_area.GetValue() == '':
-                    tv_show_text_area.SetValue(new_show.title().strip())
+                    tv_show_text_area.SetValue(new_show)
+                    self.favourite_shows.append(new_show)
                 else:
                     current_shows = tv_show_text_area.GetValue().split(', ')
                     if new_show in current_shows:
                         print 'show exists already'
                     else:
-                        tv_show_text_area.AppendText(', ' + new_show.title().strip())
+                        tv_show_text_area.AppendText(', ' + new_show)
+                        self.favourite_shows.append(new_show)
             show_box.SetValue('Show name')
 
         def on_del_show(event):
@@ -62,6 +66,7 @@ class WindowClass(wx.Frame):
                     print to_del_show + ' show not in list'
                 else:
                     current_shows.remove(to_del_show)
+                    self.favourite_shows.remove(to_del_show)
                     tv_show_text_area.SetValue('')
                     for index, show in enumerate(current_shows):
                         if index < len(current_shows) - 1:
@@ -84,6 +89,9 @@ class WindowClass(wx.Frame):
                     filtered_title = title.split(match)[0].title().strip()
                 except AttributeError:
                     filtered_title = title
+                if filtered_title in self.favourite_shows:
+                    magnet_link = child.find('{http://xmlns.ezrss.it/0.1/}magnetURI').text
+                    os.startfile(magnet_link)
 
         panel = wx.Panel(self, wx.ID_ANY)
 
