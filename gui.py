@@ -6,6 +6,9 @@ import xml.etree.ElementTree as ET
 import os
 
 
+# TODO: Save vpn path in local file and read it at startup
+# TODO: Save favorites in local file and read them at startup, adding 'save' option if list is updated through gui
+# TODO: Allow to toggle vpn use
 class WindowClass(wx.Frame):
 
     def __init__(self, *args, **kwargs):
@@ -76,22 +79,21 @@ class WindowClass(wx.Frame):
             del_show_box.SetValue('Show name')
 
         def on_start(event):
-            check_vpn()
-            # TODO The request has to start only if vpn is active
-            show_list_root = ET.fromstring(request_xml('https://eztv.ag/ezrss.xml')).find('channel')
+            if check_vpn():
+                show_list_root = ET.fromstring(request_xml('https://eztv.ag/ezrss.xml')).find('channel')
 
-            for child in show_list_root.findall('item'):
-                title = child.find('title').text
-                try:
-                    # This is a temp regex solution that looks for patterns like s09e01 which
-                    # is the standard when naming a tv show file
-                    match = re.search(r's[0-9]{2}e[0-9]{2}', title, re.IGNORECASE).group(0)
-                    filtered_title = title.split(match)[0].title().strip()
-                except AttributeError:
-                    filtered_title = title
-                if filtered_title in self.favourite_shows:
-                    magnet_link = child.find('{http://xmlns.ezrss.it/0.1/}magnetURI').text
-                    os.startfile(magnet_link)
+                for child in show_list_root.findall('item'):
+                    title = child.find('title').text
+                    try:
+                        # This is a temp regex solution that looks for patterns like s09e01 which
+                        # is the standard when naming a tv show file
+                        match = re.search(r's[0-9]{2}e[0-9]{2}', title, re.IGNORECASE).group(0)
+                        filtered_title = title.split(match)[0].title().strip()
+                    except AttributeError:
+                        filtered_title = title
+                    if filtered_title in self.favourite_shows:
+                        magnet_link = child.find('{http://xmlns.ezrss.it/0.1/}magnetURI').text
+                        os.startfile(magnet_link)
 
         panel = wx.Panel(self, wx.ID_ANY)
 
