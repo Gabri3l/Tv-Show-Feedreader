@@ -95,6 +95,12 @@ class WindowClass(wx.Frame):
                         magnet_link = child.find('{http://xmlns.ezrss.it/0.1/}magnetURI').text
                         os.startfile(magnet_link)
 
+        def toggle_vpn(event):
+            if vpn_toggle.GetSelection():
+                open_file_button.Disable()
+            else:
+                open_file_button.Enable()
+
         panel = wx.Panel(self, wx.ID_ANY)
 
         # buttons
@@ -103,9 +109,10 @@ class WindowClass(wx.Frame):
         del_show_button = wx.Button(panel, wx.ID_ANY, 'Del Show', (530, 45))
         start_button = wx.Button(panel, wx.ID_ANY, 'Start', (250, 390))
 
-        vpn_toggle = wx.StaticText(panel, 4, 'Are you going to use a VPN ?', (10, 80))
-        vpn_toggle_yes = wx.RadioButton(panel, 5, 'Yes', (280, 80), style=wx.RB_GROUP)
-        vpn_toggle_no = wx.RadioButton(panel, 5, 'No', (320, 80))
+        vpn_toggle_text = wx.StaticText(panel, 4, 'Are you going to use a VPN ?', (10, 80))
+        # vpn_toggle_yes = wx.RadioButton(panel, 5, 'Yes', (280, 80), style=wx.RB_GROUP)
+        # vpn_toggle_no = wx.RadioButton(panel, 5, 'No', (320, 80))
+        vpn_toggle = wx.RadioBox(panel, wx.ID_ANY, choices=['Yes', 'No'], pos=(280, 80))
 
         # buttons bindings
         open_file_button.Bind(wx.EVT_BUTTON, on_button)
@@ -113,6 +120,9 @@ class WindowClass(wx.Frame):
         del_show_button.Bind(wx.EVT_BUTTON, on_del_show)
         start_button.Bind(wx.EVT_BUTTON, on_start)
 
+        vpn_toggle.Bind(wx.EVT_RADIOBOX, toggle_vpn)
+
+        # self.Bind(wx.EVT_RADIOBUTTON, vpn_toggle_yes, toggle_vpn)
         # text areas
         vpn_text_area = wx.TextCtrl(panel, 2, pos=(10, 10), size=(510, 25))
         vpn_text_area.Disable()
