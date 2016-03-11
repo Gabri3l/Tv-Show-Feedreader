@@ -103,6 +103,10 @@ class WindowClass(wx.Frame):
         del_show_button = wx.Button(panel, wx.ID_ANY, 'Del Show', (530, 45))
         start_button = wx.Button(panel, wx.ID_ANY, 'Start', (250, 390))
 
+        vpn_toggle = wx.StaticText(panel, 4, 'Are you going to use a VPN ?', (10, 80))
+        vpn_toggle_yes = wx.RadioButton(panel, 5, 'Yes', (280, 80), style=wx.RB_GROUP)
+        vpn_toggle_no = wx.RadioButton(panel, 5, 'No', (320, 80))
+
         # buttons bindings
         open_file_button.Bind(wx.EVT_BUTTON, on_button)
         add_show_button.Bind(wx.EVT_BUTTON, on_add_show)
