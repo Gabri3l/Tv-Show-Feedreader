@@ -6,16 +6,23 @@ import xml.etree.ElementTree as ET
 import os
 
 
+# TODO: Allow app to run in background or tray icon
+# TODO: If running continuously it should check the feed every 24 hours
+# TODO: Provide list of observed items during app running time
+# TODO: Change Shows text view to scrollable text view
+# TODO: Add Clear button on vpn path
+# TODO: Ask to save changes on exit
 class WindowClass(wx.Frame):
 
     def __init__(self, *args, **kwargs):
         super(WindowClass, self).__init__(*args, **kwargs)
+        self.vpn = ''
+        self.use_vpn = True
+        self.favourite_shows = []
         self.start_up = True
         self.add_gui()
         self.Center()
         self.Show()
-        self.favourite_shows = []
-        self.vpn = ''
 
     def add_gui(self):
 
@@ -78,8 +85,13 @@ class WindowClass(wx.Frame):
             del_show_box.SetValue('Show name')
 
         def on_start(event):
-            if check_vpn():
-                show_xml = request_xml('https://ezttv.ag/ezrss.xml')
+            if self.use_vpn:
+                is_vpn_active = check_vpn()
+            else:
+                is_vpn_active = True
+
+            if is_vpn_active and len(self.favourite_shows) > 0:
+                show_xml = request_xml('https://eztv.ag/ezrss.xml')
                 if show_xml != '':
                     show_list_root = ET.fromstring(show_xml).find('channel')
 
@@ -95,17 +107,23 @@ class WindowClass(wx.Frame):
                         if filtered_title in self.favourite_shows:
                             magnet_link = child.find('{http://xmlns.ezrss.it/0.1/}magnetURI').text
                             os.startfile(magnet_link)
+            elif is_vpn_active:
+                wx.MessageBox('There are no shows in your list. Please make sure to add at least one.',
+                              'No shows found.', wx.OK | wx.ICON_INFORMATION)
 
         def toggle_vpn(event):
             if vpn_toggle.GetSelection():
                 open_file_button.Disable()
+                self.use_vpn = False
             else:
                 open_file_button.Enable()
+                self.use_vpn = True
 
         def save_config(event):
             f = open('config.txt', 'w')
             f.write(vpn_text_area.GetValue() + '\n')
-            f.write(tv_show_text_area.GetValue() + '\n')
+            if len(self.favourite_shows) > 0:
+                f.write(tv_show_text_area.GetValue() + '\n')
             f.close()
 
         def load_config(event):
@@ -116,9 +134,10 @@ class WindowClass(wx.Frame):
 
                 if saved_vpn_path:
                     vpn_text_area.SetValue(saved_vpn_path)
-                    self.vpn = saved_vpn_path[saved_vpn_path.rfind('\\') + 1:]
-                tv_show_text_area.SetValue(saved_shows[:-1])
-                self.favourite_shows = saved_shows.split(', ')
+                    self.vpn = saved_vpn_path[saved_vpn_path.rfind('\\') + 1:-1]
+                if saved_shows != '':
+                    tv_show_text_area.SetValue(saved_shows[:-1])
+                    self.favourite_shows = saved_shows.split(', ')
                 f.close()
             except IOError:
                 if not self.start_up:
@@ -182,5 +201,5 @@ def request_xml(site):
 
 if __name__ == '__main__':
     app = wx.App()
-    WindowClass(None, title='Tv Show AutoDownload', size=(640, 480))
+    WindowClass(None, title='Tv Show Feed Reader', size=(640, 480))
     app.MainLoop()
