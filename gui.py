@@ -6,9 +6,7 @@ import xml.etree.ElementTree as ET
 import os
 
 
-# TODO: Save vpn path in local file and read it at startup
-# TODO: Save favorites in local file and read them at startup, adding 'save' option if list is updated through gui
-# TODO: Allow to toggle vpn use
+# TODO: Get vpn name from user specified path
 class WindowClass(wx.Frame):
 
     def __init__(self, *args, **kwargs):
@@ -24,7 +22,7 @@ class WindowClass(wx.Frame):
             vpn_app = vpn_text_area.GetValue()  # This value needs to be filtered with a regex
             is_vpn_active = False
             if vpn_app == '':
-                vpn_text_area.SetValue('Please provide a valid application path')
+                vpn_text_area.SetValue('Please provide a valid application path.')
                 print 'no vpn name specified'
             elif vpn_app == 'Please provide a valid application path':
                 print 'no vpn name specified'
@@ -43,8 +41,8 @@ class WindowClass(wx.Frame):
             open_file_dialog = wx.FileDialog(self, "Open", "", "",
                                              "Executables (*.exe)|*.exe",
                                              wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
-            open_file_dialog.ShowModal()
-            vpn_text_area.SetValue(open_file_dialog.GetPath())
+            if open_file_dialog.ShowModal() == wx.ID_OK:
+                vpn_text_area.SetValue(open_file_dialog.GetPath())
 
         def on_add_show(event):
             if show_box.ShowModal() == wx.ID_OK:
@@ -101,6 +99,25 @@ class WindowClass(wx.Frame):
             else:
                 open_file_button.Enable()
 
+        def save_config(event):
+            f = open('config.txt', 'w')
+            f.write(vpn_text_area.GetValue() + '\n')
+            f.write(tv_show_text_area.GetValue() + '\n')
+            f.close()
+
+        def load_config(event):
+            try:
+                f = open('config.txt', 'r')
+                saved_vpn_path = f.readline()
+                saved_shows = f.readline()
+
+                vpn_text_area.SetValue(saved_vpn_path)
+                tv_show_text_area.SetValue(saved_shows)
+                self.favourite_shows = saved_shows.split(', ')
+                f.close()
+            except IOError:
+                print 'no config file existing'
+
         panel = wx.Panel(self, wx.ID_ANY)
 
         # buttons
@@ -108,10 +125,10 @@ class WindowClass(wx.Frame):
         add_show_button = wx.Button(panel, wx.ID_ANY, 'Add Show', (440, 45))
         del_show_button = wx.Button(panel, wx.ID_ANY, 'Del Show', (530, 45))
         start_button = wx.Button(panel, wx.ID_ANY, 'Start', (250, 390))
+        save_button = wx.Button(panel, wx.ID_ANY, 'Save', (340, 390))
+        load_button = wx.Button(panel, wx.ID_ANY, 'Load', (430, 390))
 
         vpn_toggle_text = wx.StaticText(panel, 4, 'Are you going to use a VPN ?', (10, 80))
-        # vpn_toggle_yes = wx.RadioButton(panel, 5, 'Yes', (280, 80), style=wx.RB_GROUP)
-        # vpn_toggle_no = wx.RadioButton(panel, 5, 'No', (320, 80))
         vpn_toggle = wx.RadioBox(panel, wx.ID_ANY, choices=['Yes', 'No'], pos=(280, 80))
 
         # buttons bindings
@@ -119,10 +136,10 @@ class WindowClass(wx.Frame):
         add_show_button.Bind(wx.EVT_BUTTON, on_add_show)
         del_show_button.Bind(wx.EVT_BUTTON, on_del_show)
         start_button.Bind(wx.EVT_BUTTON, on_start)
-
         vpn_toggle.Bind(wx.EVT_RADIOBOX, toggle_vpn)
+        save_button.Bind(wx.EVT_BUTTON, save_config)
+        load_button.Bind(wx.EVT_BUTTON, load_config)
 
-        # self.Bind(wx.EVT_RADIOBUTTON, vpn_toggle_yes, toggle_vpn)
         # text areas
         vpn_text_area = wx.TextCtrl(panel, 2, pos=(10, 10), size=(510, 25))
         vpn_text_area.Disable()
@@ -132,6 +149,8 @@ class WindowClass(wx.Frame):
         # modal
         show_box = wx.TextEntryDialog(None, 'What show would you like to add?', 'Add Show', 'Show name')
         del_show_box = wx.TextEntryDialog(None, 'Which show would you like to remove?', 'Del Show', 'Show name')
+
+        load_config(None)
 
 
 def request_xml(site):
