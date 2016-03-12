@@ -6,11 +6,11 @@ import xml.etree.ElementTree as ET
 import os
 
 
-# TODO: Get vpn name from user specified path
 class WindowClass(wx.Frame):
 
     def __init__(self, *args, **kwargs):
         super(WindowClass, self).__init__(*args, **kwargs)
+        self.start_up = True
         self.add_gui()
         self.Center()
         self.Show()
@@ -22,20 +22,16 @@ class WindowClass(wx.Frame):
         def check_vpn():
             vpn_app = vpn_text_area.GetValue()  # This value needs to be filtered with a regex
             is_vpn_active = False
-            if vpn_app == '':
+            if vpn_app == '' or vpn_app == 'Please provide a valid application path':
                 vpn_text_area.SetValue('Please provide a valid application path.')
-                print 'no vpn name specified'
-            elif vpn_app == 'Please provide a valid application path':
-                print 'no vpn name specified'
             else:
                 for p in psutil.process_iter():
                     if p.name() == self.vpn:
                         is_vpn_active = True
 
-                if is_vpn_active:
-                    print "vpn is active"
-                else:
-                    print 'vpn is not active'
+                if not is_vpn_active:
+                    wx.MessageBox('Your VPN is not running. Make sure to protect your connection.',
+                                  'No VPN active', wx.OK | wx.ICON_ERROR)
             return is_vpn_active
 
         def on_button(event):
@@ -56,7 +52,8 @@ class WindowClass(wx.Frame):
                 else:
                     current_shows = tv_show_text_area.GetValue().split(', ')
                     if new_show in current_shows:
-                        print 'show exists already'
+                        wx.MessageBox('The show provided is already in the list.',
+                                      'Duplicate found!', wx.OK | wx.ICON_EXCLAMATION)
                     else:
                         tv_show_text_area.AppendText(', ' + new_show)
                         self.favourite_shows.append(new_show)
@@ -67,7 +64,8 @@ class WindowClass(wx.Frame):
                 to_del_show = del_show_box.GetValue().title().strip()
                 current_shows = tv_show_text_area.GetValue().split(', ')
                 if to_del_show not in current_shows:
-                    print to_del_show + ' show not in list'
+                    wx.MessageBox('The show specified is not in the list.',
+                                  'Can\'t remove show', wx.OK | wx.ICON_INFORMATION)
                 else:
                     current_shows.remove(to_del_show)
                     self.favourite_shows.remove(to_del_show)
@@ -81,20 +79,22 @@ class WindowClass(wx.Frame):
 
         def on_start(event):
             if check_vpn():
-                show_list_root = ET.fromstring(request_xml('https://eztv.ag/ezrss.xml')).find('channel')
+                show_xml = request_xml('https://ezttv.ag/ezrss.xml')
+                if show_xml != '':
+                    show_list_root = ET.fromstring(show_xml).find('channel')
 
-                for child in show_list_root.findall('item'):
-                    title = child.find('title').text
-                    try:
-                        # This is a temp regex solution that looks for patterns like s09e01 which
-                        # is the standard when naming a tv show file
-                        match = re.search(r's[0-9]{2}e[0-9]{2}', title, re.IGNORECASE).group(0)
-                        filtered_title = title.split(match)[0].title().strip()
-                    except AttributeError:
-                        filtered_title = title
-                    if filtered_title in self.favourite_shows:
-                        magnet_link = child.find('{http://xmlns.ezrss.it/0.1/}magnetURI').text
-                        os.startfile(magnet_link)
+                    for child in show_list_root.findall('item'):
+                        title = child.find('title').text
+                        try:
+                            # This is a temp regex solution that looks for patterns like s09e01 which
+                            # is the standard when naming a tv show file
+                            match = re.search(r's[0-9]{2}e[0-9]{2}', title, re.IGNORECASE).group(0)
+                            filtered_title = title.split(match)[0].title().strip()
+                        except AttributeError:
+                            filtered_title = title
+                        if filtered_title in self.favourite_shows:
+                            magnet_link = child.find('{http://xmlns.ezrss.it/0.1/}magnetURI').text
+                            os.startfile(magnet_link)
 
         def toggle_vpn(event):
             if vpn_toggle.GetSelection():
@@ -117,11 +117,13 @@ class WindowClass(wx.Frame):
                 if saved_vpn_path:
                     vpn_text_area.SetValue(saved_vpn_path)
                     self.vpn = saved_vpn_path[saved_vpn_path.rfind('\\') + 1:]
-                tv_show_text_area.SetValue(saved_shows)
+                tv_show_text_area.SetValue(saved_shows[:-1])
                 self.favourite_shows = saved_shows.split(', ')
                 f.close()
             except IOError:
-                print 'no config file existing'
+                if not self.start_up:
+                    wx.MessageBox('No config file could be found.',
+                                  'Missing config!', wx.OK | wx.ICON_ERROR)
 
         panel = wx.Panel(self, wx.ID_ANY)
 
@@ -133,7 +135,7 @@ class WindowClass(wx.Frame):
         save_button = wx.Button(panel, wx.ID_ANY, 'Save', (340, 390))
         load_button = wx.Button(panel, wx.ID_ANY, 'Load', (430, 390))
 
-        vpn_toggle_text = wx.StaticText(panel, 4, 'Are you going to use a VPN ?', (10, 80))
+        wx.StaticText(panel, 4, 'Are you going to use a VPN ?', (10, 80))
         vpn_toggle = wx.RadioBox(panel, wx.ID_ANY, choices=['Yes', 'No'], pos=(280, 80))
 
         # buttons bindings
@@ -156,6 +158,7 @@ class WindowClass(wx.Frame):
         del_show_box = wx.TextEntryDialog(None, 'Which show would you like to remove?', 'Del Show', 'Show name')
 
         load_config(None)
+        self.start_up = False
 
 
 def request_xml(site):
@@ -167,10 +170,15 @@ def request_xml(site):
            'Accept-Language': 'en-US,en;q=0.8',
            'Connection': 'keep-alive'}
     req = urllib2.Request(site, headers=hdr)
-    response = urllib2.urlopen(req)
-    xml = response.read()
-    response.close()
-    return xml
+    try:
+        response = urllib2.urlopen(req)
+        xml = response.read()
+        response.close()
+        return xml
+    except urllib2.URLError:
+        wx.MessageBox('The feed does not exist or is temporary down.',
+                      'Can\'t access feed', wx.OK | wx.ICON_ERROR)
+        return ''
 
 if __name__ == '__main__':
     app = wx.App()
