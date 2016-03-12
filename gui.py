@@ -15,6 +15,7 @@ class WindowClass(wx.Frame):
         self.Center()
         self.Show()
         self.favourite_shows = []
+        self.vpn = ''
 
     def add_gui(self):
 
@@ -28,7 +29,7 @@ class WindowClass(wx.Frame):
                 print 'no vpn name specified'
             else:
                 for p in psutil.process_iter():
-                    if p.name() == 'openvpn-gui.exe':
+                    if p.name() == self.vpn:
                         is_vpn_active = True
 
                 if is_vpn_active:
@@ -42,7 +43,9 @@ class WindowClass(wx.Frame):
                                              "Executables (*.exe)|*.exe",
                                              wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
             if open_file_dialog.ShowModal() == wx.ID_OK:
-                vpn_text_area.SetValue(open_file_dialog.GetPath())
+                vpn_path = open_file_dialog.GetPath()
+                vpn_text_area.SetValue(vpn_path)
+                self.vpn = vpn_path[vpn_path.rfind('\\') + 1:]
 
         def on_add_show(event):
             if show_box.ShowModal() == wx.ID_OK:
@@ -111,7 +114,9 @@ class WindowClass(wx.Frame):
                 saved_vpn_path = f.readline()
                 saved_shows = f.readline()
 
-                vpn_text_area.SetValue(saved_vpn_path)
+                if saved_vpn_path:
+                    vpn_text_area.SetValue(saved_vpn_path)
+                    self.vpn = saved_vpn_path[saved_vpn_path.rfind('\\') + 1:]
                 tv_show_text_area.SetValue(saved_shows)
                 self.favourite_shows = saved_shows.split(', ')
                 f.close()
