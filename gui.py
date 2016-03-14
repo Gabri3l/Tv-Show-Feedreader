@@ -114,7 +114,7 @@ class WindowClass(wx.Frame):
                               'No shows found.', wx.OK | wx.ICON_INFORMATION)
 
         def toggle_vpn(event):
-            if vpn_toggle.GetSelection():
+            if vpn_no.GetValue():
                 open_file_button.Disable()
                 self.use_vpn = False
             else:
@@ -122,6 +122,7 @@ class WindowClass(wx.Frame):
                 self.use_vpn = True
 
         def save_config(event):
+            print 'saving'
             f = open('config.txt', 'w')
             f.write(vpn_text_area.GetValue() + '\n')
             if len(self.favourite_shows) > 0:
@@ -139,7 +140,8 @@ class WindowClass(wx.Frame):
                     self.vpn = saved_vpn_path[saved_vpn_path.rfind('\\') + 1:-1]
                 if saved_shows != '':
                     tv_show_text_area.SetValue(saved_shows[:-1])
-                    self.favourite_shows = saved_shows.split(', ')
+                    self.favourite_shows = saved_shows[:-1].split(', ')
+                    print self.favourite_shows
                 f.close()
             except IOError:
                 if not self.start_up:
@@ -153,21 +155,26 @@ class WindowClass(wx.Frame):
         menu_bar = wx.MenuBar()
         file_menu = wx.Menu()
         file_menu.Append(wx.NewId(), "Save config", "This will save the current configuration.")
+        file_menu.Bind(wx.EVT_MENU, save_config)
         file_menu.Append(wx.NewId(), "Load config", "This will load a configuration from file")
         menu_bar.Append(file_menu, "File")
         self.SetMenuBar(menu_bar)
 
         # buttons
-        open_file_button = wx.Button(panel, wx.ID_ANY, 'Select VPN', (440, 10))
-        clear_file_button = wx.Button(panel, wx.ID_ANY, 'Clear', (530, 10))
-        add_show_button = wx.Button(panel, wx.ID_ANY, 'Add Show', (440, 45))
-        del_show_button = wx.Button(panel, wx.ID_ANY, 'Del Show', (530, 45))
+        open_file_button = wx.Button(panel, wx.ID_ANY, 'Select VPN', (390, 70))
+        clear_file_button = wx.Button(panel, wx.ID_ANY, 'Clear', (480, 70))
+        add_show_button = wx.Button(panel, wx.ID_ANY, 'Add Show', (390, 135))
+        del_show_button = wx.Button(panel, wx.ID_ANY, 'Del Show', (480, 135))
         start_button = wx.Button(panel, wx.ID_ANY, 'Start', (250, 390))
-        save_button = wx.Button(panel, wx.ID_ANY, 'Save', (340, 390))
-        load_button = wx.Button(panel, wx.ID_ANY, 'Load', (430, 390))
 
-        wx.StaticText(panel, 4, 'Are you going to use a VPN ?', (10, 80))
-        vpn_toggle = wx.RadioBox(panel, wx.ID_ANY, choices=['Yes', 'No'], pos=(280, 80))
+        wx.StaticText(panel, 4, 'Are you going to use a VPN ?', (25, 35))
+        vpn_yes = wx.RadioButton(panel, 7, 'Yes', pos=(420, 35), style=wx.RB_GROUP)
+        vpn_no = wx.RadioButton(panel, 7, 'No', pos=(510, 35))
+
+        # vpn static box
+        wx.StaticBox(panel, 6, 'VPN Status', (10, 10), (580, 100))
+        # tv-shows static box
+        wx.StaticBox(panel, 6, 'Tv Shows List', (10, 110), (580, 120))
 
         # buttons bindings
         open_file_button.Bind(wx.EVT_BUTTON, on_button)
@@ -175,15 +182,12 @@ class WindowClass(wx.Frame):
         add_show_button.Bind(wx.EVT_BUTTON, on_add_show)
         del_show_button.Bind(wx.EVT_BUTTON, on_del_show)
         start_button.Bind(wx.EVT_BUTTON, on_start)
-        vpn_toggle.Bind(wx.EVT_RADIOBOX, toggle_vpn)
-        save_button.Bind(wx.EVT_BUTTON, save_config)
-        load_button.Bind(wx.EVT_BUTTON, load_config)
+        vpn_yes.Bind(wx.EVT_RADIOBUTTON, toggle_vpn)
+        vpn_no.Bind(wx.EVT_RADIOBUTTON, toggle_vpn)
 
         # text areas
-        vpn_text_area = wx.TextCtrl(panel, 2, pos=(10, 10), size=(420, 25))
-        vpn_text_area.Disable()
-        tv_show_text_area = wx.TextCtrl(panel, 2, pos=(10, 45), size=(420, 25))
-        tv_show_text_area.Disable()
+        vpn_text_area = wx.TextCtrl(panel, 2, pos=(20, 70), size=(350, 25), style=wx.TE_READONLY)
+        tv_show_text_area = wx.TextCtrl(panel, 2, pos=(20, 135), size=(350, 75), style=wx.TE_READONLY)
 
         # modal
         show_box = wx.TextEntryDialog(None, 'What show would you like to add?', 'Add Show', 'Show name')
