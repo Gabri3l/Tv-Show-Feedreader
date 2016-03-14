@@ -10,7 +10,6 @@ import os
 # TODO: If running continuously it should check the feed every 24 hours
 # TODO: Provide list of observed items during app running time
 # TODO: Change Shows text view to scrollable text view
-# TODO: Add Clear button on vpn path
 # TODO: Ask to save changes on exit
 class WindowClass(wx.Frame):
 
@@ -149,6 +148,15 @@ class WindowClass(wx.Frame):
 
         panel = wx.Panel(self, wx.ID_ANY)
 
+        #menu
+        self.CreateStatusBar()
+        menu_bar = wx.MenuBar()
+        file_menu = wx.Menu()
+        file_menu.Append(wx.NewId(), "Save config", "This will save the current configuration.")
+        file_menu.Append(wx.NewId(), "Load config", "This will load a configuration from file")
+        menu_bar.Append(file_menu, "File")
+        self.SetMenuBar(menu_bar)
+
         # buttons
         open_file_button = wx.Button(panel, wx.ID_ANY, 'Select VPN', (440, 10))
         clear_file_button = wx.Button(panel, wx.ID_ANY, 'Clear', (530, 10))
@@ -206,5 +214,5 @@ def request_xml(site):
 
 if __name__ == '__main__':
     app = wx.App()
-    WindowClass(None, title='Tv Show Feed Reader', size=(640, 480))
+    WindowClass(None, title='Tv Show Feed Reader', size=(640, 500))
     app.MainLoop()
