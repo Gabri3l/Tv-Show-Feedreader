@@ -50,6 +50,9 @@ class WindowClass(wx.Frame):
                 vpn_text_area.SetValue(vpn_path)
                 self.vpn = vpn_path[vpn_path.rfind('\\') + 1:]
 
+        def on_clear(event):
+            vpn_text_area.SetValue('')
+
         def on_add_show(event):
             if show_box.ShowModal() == wx.ID_OK:
                 new_show = show_box.GetValue().title().strip()
@@ -147,7 +150,8 @@ class WindowClass(wx.Frame):
         panel = wx.Panel(self, wx.ID_ANY)
 
         # buttons
-        open_file_button = wx.Button(panel, wx.ID_ANY, 'Select VPN', (530, 10))
+        open_file_button = wx.Button(panel, wx.ID_ANY, 'Select VPN', (440, 10))
+        clear_file_button = wx.Button(panel, wx.ID_ANY, 'Clear', (530, 10))
         add_show_button = wx.Button(panel, wx.ID_ANY, 'Add Show', (440, 45))
         del_show_button = wx.Button(panel, wx.ID_ANY, 'Del Show', (530, 45))
         start_button = wx.Button(panel, wx.ID_ANY, 'Start', (250, 390))
@@ -159,6 +163,7 @@ class WindowClass(wx.Frame):
 
         # buttons bindings
         open_file_button.Bind(wx.EVT_BUTTON, on_button)
+        clear_file_button.Bind(wx.EVT_BUTTON, on_clear)
         add_show_button.Bind(wx.EVT_BUTTON, on_add_show)
         del_show_button.Bind(wx.EVT_BUTTON, on_del_show)
         start_button.Bind(wx.EVT_BUTTON, on_start)
@@ -167,7 +172,7 @@ class WindowClass(wx.Frame):
         load_button.Bind(wx.EVT_BUTTON, load_config)
 
         # text areas
-        vpn_text_area = wx.TextCtrl(panel, 2, pos=(10, 10), size=(510, 25))
+        vpn_text_area = wx.TextCtrl(panel, 2, pos=(10, 10), size=(420, 25))
         vpn_text_area.Disable()
         tv_show_text_area = wx.TextCtrl(panel, 2, pos=(10, 45), size=(420, 25))
         tv_show_text_area.Disable()
