@@ -86,6 +86,11 @@ class WindowClass(wx.Frame):
                             tv_show_text_area.AppendText(show)
             del_show_box.SetValue('Show name')
 
+        def on_del_all_shows(event):
+            if del_all_shows_box.ShowModal() == wx.ID_YES:
+                tv_show_text_area.SetValue('')
+                self.favourite_shows = []
+
         def on_start(event):
             if self.use_vpn:
                 is_vpn_active = check_vpn()
@@ -150,7 +155,7 @@ class WindowClass(wx.Frame):
 
         panel = wx.Panel(self, wx.ID_ANY)
 
-        #menu
+        # menu
         self.CreateStatusBar()
         menu_bar = wx.MenuBar()
         file_menu = wx.Menu()
@@ -160,38 +165,46 @@ class WindowClass(wx.Frame):
         menu_bar.Append(file_menu, "File")
         self.SetMenuBar(menu_bar)
 
-        # buttons
-        open_file_button = wx.Button(panel, wx.ID_ANY, 'Select VPN', (390, 70))
-        clear_file_button = wx.Button(panel, wx.ID_ANY, 'Clear', (480, 70))
-        add_show_button = wx.Button(panel, wx.ID_ANY, 'Add Show', (390, 135))
-        del_show_button = wx.Button(panel, wx.ID_ANY, 'Del Show', (480, 135))
-        start_button = wx.Button(panel, wx.ID_ANY, 'Start', (250, 390))
+        # vpn static box
+        wx.StaticBox(panel, 6, 'VPN Status', (10, 10), (580, 100))
 
         wx.StaticText(panel, 4, 'Are you going to use a VPN ?', (25, 35))
         vpn_yes = wx.RadioButton(panel, 7, 'Yes', pos=(420, 35), style=wx.RB_GROUP)
         vpn_no = wx.RadioButton(panel, 7, 'No', pos=(510, 35))
 
-        # vpn static box
-        wx.StaticBox(panel, 6, 'VPN Status', (10, 10), (580, 100))
+        vpn_text_area = wx.TextCtrl(panel, 2, pos=(20, 70), size=(350, 25), style=wx.TE_READONLY)
+        open_file_button = wx.Button(panel, wx.ID_ANY, 'Select VPN', (390, 70))
+        clear_file_button = wx.Button(panel, wx.ID_ANY, 'Clear', (480, 70))
+
         # tv-shows static box
         wx.StaticBox(panel, 6, 'Tv Shows List', (10, 110), (580, 120))
 
+        tv_show_text_area = wx.TextCtrl(panel, 2, pos=(20, 135), size=(350, 75), style=wx.TE_READONLY | wx.TE_MULTILINE)
+        add_show_button = wx.Button(panel, wx.ID_ANY, 'Add Show', (390, 135))
+        del_show_button = wx.Button(panel, wx.ID_ANY, 'Del Show', (480, 135))
+        del_all_show_button = wx.Button(panel, wx.ID_ANY, 'Del All', (480, 165))
+
+        # App start and stop
+        start_button = wx.Button(panel, wx.ID_ANY, 'Start', (250, 390))
+        stop_button = wx.Button(panel, wx.ID_ANY, 'Stop', (340, 390))
+
         # buttons bindings
-        open_file_button.Bind(wx.EVT_BUTTON, on_button)
-        clear_file_button.Bind(wx.EVT_BUTTON, on_clear)
-        add_show_button.Bind(wx.EVT_BUTTON, on_add_show)
-        del_show_button.Bind(wx.EVT_BUTTON, on_del_show)
-        start_button.Bind(wx.EVT_BUTTON, on_start)
         vpn_yes.Bind(wx.EVT_RADIOBUTTON, toggle_vpn)
         vpn_no.Bind(wx.EVT_RADIOBUTTON, toggle_vpn)
+        open_file_button.Bind(wx.EVT_BUTTON, on_button)
+        clear_file_button.Bind(wx.EVT_BUTTON, on_clear)
 
-        # text areas
-        vpn_text_area = wx.TextCtrl(panel, 2, pos=(20, 70), size=(350, 25), style=wx.TE_READONLY)
-        tv_show_text_area = wx.TextCtrl(panel, 2, pos=(20, 135), size=(350, 75), style=wx.TE_READONLY)
+        add_show_button.Bind(wx.EVT_BUTTON, on_add_show)
+        del_show_button.Bind(wx.EVT_BUTTON, on_del_show)
+        del_all_show_button.Bind(wx.EVT_BUTTON, on_del_all_shows)
+
+        start_button.Bind(wx.EVT_BUTTON, on_start)
 
         # modal
         show_box = wx.TextEntryDialog(None, 'What show would you like to add?', 'Add Show', 'Show name')
         del_show_box = wx.TextEntryDialog(None, 'Which show would you like to remove?', 'Del Show', 'Show name')
+        del_all_shows_box = wx.MessageDialog(None, 'Do you really want to remove all shows from your list?',
+                                             'Delete all shows', wx.YES_NO | wx.ICON_INFORMATION)
 
         load_config(None)
         self.start_up = False
