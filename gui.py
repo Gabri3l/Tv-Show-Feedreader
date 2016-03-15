@@ -127,21 +127,20 @@ class WindowClass(wx.Frame):
                 self.use_vpn = True
 
         def save_config(event):
-            print 'saving'
-            f = open('config.txt', 'w')
+            f = open('config.dat', 'w')
             f.write(vpn_text_area.GetValue() + '\n')
             if len(self.favourite_shows) > 0:
-                f.write(tv_show_text_area.GetValue() + '\n')
+                f.write(tv_show_text_area.GetValue())
             f.close()
 
         def load_config(event):
             try:
-                f = open('config.txt', 'r')
+                f = open('config.dat', 'r')
                 saved_vpn_path = f.readline()
                 saved_shows = f.readline()
 
                 if saved_vpn_path:
-                    vpn_text_area.SetValue(saved_vpn_path)
+                    vpn_text_area.SetValue(saved_vpn_path[:-1])
                     self.vpn = saved_vpn_path[saved_vpn_path.rfind('\\') + 1:-1]
                 if saved_shows != '':
                     tv_show_text_area.SetValue(saved_shows[:-1])
