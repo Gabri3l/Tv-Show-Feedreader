@@ -136,6 +136,7 @@ class AppGui:
 
     def on_clear_vpn_path(self, event):
         self.vpn_text_area.SetValue('')
+        self.frame.vpn = ''
 
     def check_vpn(self, event):
         vpn_app = self.vpn_text_area.GetValue()  # This value needs to be filtered with a regex
@@ -196,7 +197,7 @@ class AppGui:
         pass
 
     def on_quit(self, event):
-        if self.frame.config_changed:
+        if self.frame.config_changed and (self.frame.vpn != '' or len(self.frame.favourite_shows) > 0):
             save_before_exit = wx.MessageDialog(None, 'Do you want to save your changes?',
                                                 'Save current configuration', wx.YES_NO | wx.ICON_INFORMATION)
             if save_before_exit.ShowModal() == wx.ID_YES:
