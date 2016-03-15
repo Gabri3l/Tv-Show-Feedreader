@@ -152,16 +152,27 @@ class WindowClass(wx.Frame):
                     wx.MessageBox('No config file could be found.',
                                   'Missing config!', wx.OK | wx.ICON_ERROR)
 
+        def on_quit(event):
+            self.Close()
+
         panel = wx.Panel(self, wx.ID_ANY)
 
         # menu
         self.CreateStatusBar()
         menu_bar = wx.MenuBar()
+        # file menu
         file_menu = wx.Menu()
-        file_menu.Append(wx.NewId(), "Save config", "This will save the current configuration.")
-        file_menu.Bind(wx.EVT_MENU, save_config)
-        file_menu.Append(wx.NewId(), "Load config", "This will load a configuration from file")
+        save_config_item = wx.MenuItem(file_menu, wx.ID_SAVE, "Save config", "This will save the current configuration.")
+        load_config_item = wx.MenuItem(file_menu, wx.ID_OPEN, "Load config", "This will load a configuration from file.")
+        close_app_item = wx.MenuItem(file_menu, wx.ID_EXIT, "Close", "Close the application.")
+        file_menu.AppendItem(save_config_item)
+        file_menu.AppendItem(load_config_item)
+        file_menu.AppendSeparator()
+        file_menu.AppendItem(close_app_item)
         menu_bar.Append(file_menu, "File")
+        # file menu bindings
+        self.Bind(wx.EVT_MENU, save_config, save_config_item)
+        self.Bind(wx.EVT_MENU, on_quit, close_app_item)
         self.SetMenuBar(menu_bar)
 
         # vpn static box
