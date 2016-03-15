@@ -9,14 +9,13 @@ import os
 # TODO: Allow app to run in background or tray icon
 # TODO: If running continuously it should check the feed every 24 hours
 # TODO: Provide list of observed items during app running time
-# TODO: Change Shows text view to scrollable text view
-# TODO: Ask to save changes on exit
 class WindowClass(wx.Frame):
 
     def __init__(self, *args, **kwargs):
         super(WindowClass, self).__init__(*args, **kwargs)
         self.vpn = ''
         self.use_vpn = True
+        self.config_changed = False
         self.favourite_shows = []
         self.start_up = True
         self.add_gui()
@@ -47,6 +46,7 @@ class WindowClass(wx.Frame):
             if open_file_dialog.ShowModal() == wx.ID_OK:
                 vpn_path = open_file_dialog.GetPath()
                 vpn_text_area.SetValue(vpn_path)
+                self.config_changed = True
                 self.vpn = vpn_path[vpn_path.rfind('\\') + 1:]
 
         def on_clear(event):
@@ -58,6 +58,7 @@ class WindowClass(wx.Frame):
                 if tv_show_text_area.GetValue() == '':
                     tv_show_text_area.SetValue(new_show)
                     self.favourite_shows.append(new_show)
+                    self.config_changed = True
                 else:
                     current_shows = tv_show_text_area.GetValue().split(', ')
                     if new_show in current_shows:
@@ -66,6 +67,7 @@ class WindowClass(wx.Frame):
                     else:
                         tv_show_text_area.AppendText(', ' + new_show)
                         self.favourite_shows.append(new_show)
+                        self.config_changed = True
             show_box.SetValue('Show name')
 
         def on_del_show(event):
@@ -153,7 +155,10 @@ class WindowClass(wx.Frame):
                                   'Missing config!', wx.OK | wx.ICON_ERROR)
 
         def on_quit(event):
-            self.Close()
+            if self.config_changed:
+                if save_before_exit.ShowModal() == wx.ID_YES:
+                    save_config(event)
+            self.Destroy()
 
         panel = wx.Panel(self, wx.ID_ANY)
 
@@ -173,6 +178,7 @@ class WindowClass(wx.Frame):
         # file menu bindings
         self.Bind(wx.EVT_MENU, save_config, save_config_item)
         self.Bind(wx.EVT_MENU, on_quit, close_app_item)
+        self.Bind(wx.EVT_CLOSE, on_quit)
         self.SetMenuBar(menu_bar)
 
         # vpn static box
@@ -215,6 +221,8 @@ class WindowClass(wx.Frame):
         del_show_box = wx.TextEntryDialog(None, 'Which show would you like to remove?', 'Del Show', 'Show name')
         del_all_shows_box = wx.MessageDialog(None, 'Do you really want to remove all shows from your list?',
                                              'Delete all shows', wx.YES_NO | wx.ICON_INFORMATION)
+        save_before_exit = wx.MessageDialog(None, 'Do you want to save your changes?',
+                                            'Save current configuration', wx.YES_NO | wx.ICON_INFORMATION)
 
         load_config(None)
         self.start_up = False
