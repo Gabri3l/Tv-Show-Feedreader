@@ -12,6 +12,8 @@ from mail_ico import getIcon
 class MailIcon(wx.TaskBarIcon):
     TB_MENU_RESTORE = wx.NewId()
     TB_MENU_CLOSE = wx.NewId()
+    TB_MENU_START = wx.NewId()
+    TB_MENU_STOP = wx.NewId()
 
     def __init__(self, frame):
         wx.TaskBarIcon.__init__(self)
@@ -23,13 +25,18 @@ class MailIcon(wx.TaskBarIcon):
         self.SetIcon(self.tbIcon, "Tv Show Feed Reader")
 
         # Bind some events
+        self.Bind(wx.EVT_MENU, self.on_restore, id=self.TB_MENU_RESTORE)
+        self.Bind(wx.EVT_MENU, self.frame.gui.on_start, id=self.TB_MENU_START)
+        self.Bind(wx.EVT_MENU, self.frame.gui.on_stop, id=self.TB_MENU_STOP)
         self.Bind(wx.EVT_MENU, self.frame.gui.on_quit, id=self.TB_MENU_CLOSE)
-        self.Bind(wx.EVT_MENU, self.restore, id=self.TB_MENU_RESTORE)
+
         self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, self.on_taskbar_leftclick)
 
     def create_popup_menu(self, event=None):
         menu = wx.Menu()
         menu.Append(self.TB_MENU_RESTORE, "Open Program")
+        menu.Append(self.TB_MENU_START, "Start Program")
+        menu.Append(self.TB_MENU_STOP, "Stop Program")
         menu.AppendSeparator()
         menu.Append(self.TB_MENU_CLOSE,   "Exit Program")
         return menu
@@ -39,8 +46,9 @@ class MailIcon(wx.TaskBarIcon):
         self.PopupMenu(menu)
         menu.Destroy()
 
-    def restore(self, event):
-        pass
+    def on_restore(self, event):
+        self.frame.Iconize(False)
+        self.frame.Raise()
 
 
 class AppGui:
@@ -71,7 +79,7 @@ class AppGui:
         frame.SetMenuBar(menu_bar)
 
         # Vpn static box
-        wx.StaticBox(panel, 6, 'VPN Status', (10, 10), (580, 100))
+        wx.StaticBox(panel, 6, 'VPN Status', (10, 10), (570, 100))
 
         wx.StaticText(panel, 4, 'Are you going to use a VPN ?', (25, 35))
         self.vpn_yes = wx.RadioButton(panel, 7, 'Yes', pos=(420, 35), style=wx.RB_GROUP)
@@ -82,7 +90,7 @@ class AppGui:
         self.clear_file_button = wx.Button(panel, wx.ID_ANY, 'Clear', (480, 70))
 
         # Tv shows static box
-        wx.StaticBox(panel, 6, 'Tv Shows List', (10, 110), (580, 120))
+        wx.StaticBox(panel, 6, 'Tv Shows List', (10, 110), (570, 115))
 
         self.tv_show_text_area = wx.TextCtrl(panel, 2, pos=(20, 135), size=(350, 75),
                                              style=wx.TE_READONLY | wx.TE_MULTILINE)
@@ -91,8 +99,8 @@ class AppGui:
         self.del_all_show_button = wx.Button(panel, wx.ID_ANY, 'Del All', (480, 165))
 
         # App start and stop
-        self.start_button = wx.Button(panel, wx.ID_ANY, 'Start', (413, 235))
-        self.stop_button = wx.Button(panel, wx.ID_ANY, 'Stop', (503, 235))
+        self.start_button = wx.Button(panel, wx.ID_ANY, 'Start', (390, 240))
+        self.stop_button = wx.Button(panel, wx.ID_ANY, 'Stop', (480, 240))
 
         # Buttons bindings
         self.vpn_yes.Bind(wx.EVT_RADIOBUTTON, self.toggle_vpn)
@@ -188,9 +196,9 @@ class AppGui:
         pass
 
     def on_quit(self, event):
-        save_before_exit = wx.MessageDialog(None, 'Do you want to save your changes?',
-                                            'Save current configuration', wx.YES_NO | wx.ICON_INFORMATION)
         if self.frame.config_changed:
+            save_before_exit = wx.MessageDialog(None, 'Do you want to save your changes?',
+                                                'Save current configuration', wx.YES_NO | wx.ICON_INFORMATION)
             if save_before_exit.ShowModal() == wx.ID_YES:
                 self.save_config(event)
         self.frame.tbIcon.RemoveIcon()
@@ -318,5 +326,5 @@ def request_xml(site):
 
 if __name__ == '__main__':
     app = wx.App()
-    WindowClass(None, title='Tv Show Feed Reader', size=(605, 350), style=wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER)
+    WindowClass(None, title='Tv Show Feed Reader', size=(595, 350), style=wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER)
     app.MainLoop()
