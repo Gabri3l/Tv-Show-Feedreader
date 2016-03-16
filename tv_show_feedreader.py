@@ -5,7 +5,6 @@ import re
 import xml.etree.ElementTree as ET
 import os
 import threading
-from mail_ico import getIcon
 
 
 class MailIcon(wx.TaskBarIcon):
