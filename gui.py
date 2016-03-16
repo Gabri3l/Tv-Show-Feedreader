@@ -9,7 +9,6 @@ from mail_ico import getIcon
 
 # TODO: If running continuously it should check the feed every 24 hours
 # TODO: Add video quality preference (720 or normal)
-# TODO: Save VPN toggle preference in config
 class MailIcon(wx.TaskBarIcon):
     TB_MENU_RESTORE = wx.NewId()
     TB_MENU_CLOSE = wx.NewId()
@@ -228,7 +227,7 @@ class AppGui:
     #########################################################
     def save_config(self, event):
         with open('config.dat', 'w') as f:
-            f.write(self.vpn_text_area.GetValue() + '\n')
+            f.write(self.vpn_text_area.GetValue() + '|' + str(self.vpn_yes.GetValue()) + '\n')
             if len(self.frame.favourite_shows) > 0:
                 f.write(self.tv_show_text_area.GetValue())
             self.frame.config_changed = False
@@ -236,12 +235,23 @@ class AppGui:
     def load_config(self, event):
         try:
             with open('config.dat', 'r') as f:
-                saved_vpn_path = f.readline()
+                saved_vpn_status = f.readline()
                 saved_shows = f.readline()
 
-                if saved_vpn_path:
-                    self.vpn_text_area.SetValue(saved_vpn_path[:-1])
-                    self.frame.vpn = saved_vpn_path[saved_vpn_path.rfind('\\') + 1:-1]
+                if saved_vpn_status:
+                    vpn_path = saved_vpn_status.split('|')[0]
+                    vpn_status = saved_vpn_status.split('|')[1][:-1]
+
+                    self.vpn_text_area.SetValue(vpn_path)
+                    # A radio button element belonging to a group can only be set to True
+                    if vpn_status == 'True':
+                        self.vpn_yes.SetValue(True)
+                    else:
+                        self.vpn_no.SetValue(True)
+                    self.toggle_vpn(None)
+
+                    self.frame.use_vpn = vpn_status
+                    self.frame.vpn = vpn_path[vpn_path.rfind('\\') + 1:]
                 if saved_shows != '':
                     self.tv_show_text_area.SetValue(saved_shows)
                     self.frame.favourite_shows = saved_shows.split(', ')
