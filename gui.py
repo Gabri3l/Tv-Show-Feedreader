@@ -8,7 +8,8 @@ from mail_ico import getIcon
 
 
 # TODO: If running continuously it should check the feed every 24 hours
-# TODO: Provide list of observed items during app running time
+# TODO: Add video quality preference (720 or normal)
+# TODO: Save VPN toggle preference in config
 class MailIcon(wx.TaskBarIcon):
     TB_MENU_RESTORE = wx.NewId()
     TB_MENU_CLOSE = wx.NewId()
@@ -53,6 +54,8 @@ class MailIcon(wx.TaskBarIcon):
 
 class AppGui:
 
+    ID_CLEAR_CACHE = wx.NewId()
+
     def __init__(self, frame):
         self.frame = frame
         panel = wx.Panel(frame, wx.ID_ANY)
@@ -63,18 +66,24 @@ class AppGui:
 
         # File menu
         file_menu = wx.Menu()
-        save_config_item = wx.MenuItem(file_menu, wx.ID_SAVE, "Save config", "This will save the current configuration.")
-        load_config_item = wx.MenuItem(file_menu, wx.ID_OPEN, "Load config", "This will load a configuration from file.")
+        save_config_item = wx.MenuItem(file_menu, wx.ID_SAVE, "Save config",
+                                       "This will save the current configuration.")
+        # load_config_item = wx.MenuItem(file_menu, wx.ID_OPEN, "Load config",
+        #                                "This will load a configuration from file.")
+        clear_cache_item = wx.MenuItem(file_menu, self.ID_CLEAR_CACHE, "Clear cache",
+                                       "This will clear the list of previously downloaded shows.")
         close_app_item = wx.MenuItem(file_menu, wx.ID_EXIT, "Close", "Close the application.")
         file_menu.AppendItem(save_config_item)
-        file_menu.AppendItem(load_config_item)
+        # file_menu.AppendItem(load_config_item)
+        file_menu.AppendItem(clear_cache_item)
         file_menu.AppendSeparator()
         file_menu.AppendItem(close_app_item)
         menu_bar.Append(file_menu, "File")
 
         # File menu bindings
-        frame.Bind(wx.EVT_MENU, self.save_config)
-        frame.Bind(wx.EVT_MENU, self.on_quit)
+        frame.Bind(wx.EVT_MENU, self.save_config, save_config_item)
+        frame.Bind(wx.EVT_MENU, self.clear_observed_list, clear_cache_item)
+        frame.Bind(wx.EVT_MENU, self.on_quit, close_app_item)
         frame.Bind(wx.EVT_CLOSE, self.on_quit)
         frame.SetMenuBar(menu_bar)
 
@@ -117,6 +126,7 @@ class AppGui:
 
         # Execution
         self.load_config(None)
+        self.load_observed_list()
         self.frame.start_up = False
 
     #########################################################
@@ -184,11 +194,16 @@ class AppGui:
                         # is the standard when naming a tv show file
                         match = re.search(r's[0-9]{2}e[0-9]{2}', title, re.IGNORECASE).group(0)
                         filtered_title = title.split(match)[0].title().strip()
+                        full_title = filtered_title + ' ' + match
                     except AttributeError:
                         filtered_title = title
-                    if filtered_title in self.frame.favourite_shows:
-                        magnet_link = child.find('{http://xmlns.ezrss.it/0.1/}magnetURI').text
-                        os.startfile(magnet_link)
+                    # Checks that the show is in the user favourite list and that the title has not been previously
+                    # downloaded, such info is stored in the observed_shows array
+                    if (filtered_title in self.frame.favourite_shows) and (full_title not in self.frame.observed_shows):
+                        # magnet_link = child.find('{http://xmlns.ezrss.it/0.1/}magnetURI').text
+                        # os.startfile(magnet_link)
+                        self.update_observed_list(full_title)
+
         elif is_vpn_active:
             wx.MessageBox('There are no shows in your list. Please make sure to add at least one.',
                           'No shows found.', wx.OK | wx.ICON_INFORMATION)
@@ -212,30 +227,49 @@ class AppGui:
     #                                                       #
     #########################################################
     def save_config(self, event):
-        f = open('config.dat', 'w')
-        f.write(self.vpn_text_area.GetValue() + '\n')
-        if len(self.frame.favourite_shows) > 0:
-            f.write(self.tv_show_text_area.GetValue())
-        f.close()
+        with open('config.dat', 'w') as f:
+            f.write(self.vpn_text_area.GetValue() + '\n')
+            if len(self.frame.favourite_shows) > 0:
+                f.write(self.tv_show_text_area.GetValue())
+            self.frame.config_changed = False
 
     def load_config(self, event):
         try:
-            f = open('config.dat', 'r')
-            saved_vpn_path = f.readline()
-            saved_shows = f.readline()
+            with open('config.dat', 'r') as f:
+                saved_vpn_path = f.readline()
+                saved_shows = f.readline()
 
-            if saved_vpn_path:
-                self.vpn_text_area.SetValue(saved_vpn_path[:-1])
-                self.frame.vpn = saved_vpn_path[saved_vpn_path.rfind('\\') + 1:-1]
-            if saved_shows != '':
-                self.tv_show_text_area.SetValue(saved_shows)
-                self.frame.favourite_shows = saved_shows.split(', ')
-                # print self.frame.favourite_shows
-            f.close()
+                if saved_vpn_path:
+                    self.vpn_text_area.SetValue(saved_vpn_path[:-1])
+                    self.frame.vpn = saved_vpn_path[saved_vpn_path.rfind('\\') + 1:-1]
+                if saved_shows != '':
+                    self.tv_show_text_area.SetValue(saved_shows)
+                    self.frame.favourite_shows = saved_shows.split(', ')
         except IOError:
             if not self.frame.start_up:
                 wx.MessageBox('No config file could be found.',
                               'Missing config!', wx.OK | wx.ICON_ERROR)
+
+    def update_observed_list(self, tv_show_title):
+        with open('observed.dat', 'a') as f:
+            f.write(tv_show_title + ';')
+        self.frame.observed_shows.append(tv_show_title)
+
+    def load_observed_list(self):
+        try:
+            with open('observed.dat', 'r') as f:
+                self.frame.observed_shows = f.readline().split(';')
+        except IOError:
+            pass
+
+    def clear_observed_list(self, event):
+        clear_cache_box = wx.MessageDialog(None, 'This will empty the list of previously downloaded shows, do you '
+                                                 'really want to proceed ?',
+                                           'Clear downloaded shows cache', wx.YES_NO | wx.ICON_INFORMATION)
+        if clear_cache_box.ShowModal() == wx.ID_YES:
+            self.frame.observed_shows = []
+            # Empties the file from its content
+            open('observed.dat', 'w').close()
 
     #########################################################
     #                                                       #
@@ -294,9 +328,11 @@ class WindowClass(wx.Frame):
         super(WindowClass, self).__init__(*args, **kwargs)
 
         self.vpn = ''
+        self.quality = ''
         self.use_vpn = True
         self.config_changed = False
         self.favourite_shows = []
+        self.observed_shows = []
         self.start_up = True
 
         self.gui = AppGui(self)
