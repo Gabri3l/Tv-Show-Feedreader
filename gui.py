@@ -98,7 +98,7 @@ class AppGui:
         self.clear_file_button = wx.Button(panel, wx.ID_ANY, 'Clear', (480, 70))
 
         # Tv shows static box
-        wx.StaticBox(panel, 6, 'Tv Shows List', (10, 110), (570, 115))
+        wx.StaticBox(panel, 6, 'Tv Shows List', (10, 110), (570, 135))
 
         self.tv_show_text_area = wx.TextCtrl(panel, 2, pos=(20, 135), size=(350, 75),
                                              style=wx.TE_READONLY | wx.TE_MULTILINE)
@@ -106,9 +106,14 @@ class AppGui:
         self.del_show_button = wx.Button(panel, wx.ID_ANY, 'Del Show', (480, 135))
         self.del_all_show_button = wx.Button(panel, wx.ID_ANY, 'Del All', (480, 165))
 
+        wx.StaticText(panel, 5, 'Which video quality do you prefer ?', (25, 220))
+        self.low_quality = wx.RadioButton(panel, 8, '480', pos=(330, 220), style=wx.RB_GROUP)
+        self.medium_quality = wx.RadioButton(panel, 8, '720', pos=(420, 220))
+        self.high_quality = wx.RadioButton(panel, 8, '1080', pos=(510, 220))
+
         # App start and stop
-        self.start_button = wx.Button(panel, wx.ID_ANY, 'Start', (390, 240))
-        self.stop_button = wx.Button(panel, wx.ID_ANY, 'Stop', (480, 240))
+        self.start_button = wx.Button(panel, wx.ID_ANY, 'Start', (390, 260))
+        self.stop_button = wx.Button(panel, wx.ID_ANY, 'Stop', (480, 260))
 
         # Buttons bindings
         self.vpn_yes.Bind(wx.EVT_RADIOBUTTON, self.toggle_vpn)
@@ -119,6 +124,9 @@ class AppGui:
         self.add_show_button.Bind(wx.EVT_BUTTON, self.on_add_show)
         self.del_show_button.Bind(wx.EVT_BUTTON, self.on_del_show)
         self.del_all_show_button.Bind(wx.EVT_BUTTON, self.on_del_all_shows)
+        self.low_quality.Bind(wx.EVT_RADIOBUTTON, self.set_video_quality)
+        self.medium_quality.Bind(wx.EVT_RADIOBUTTON, self.set_video_quality)
+        self.high_quality.Bind(wx.EVT_RADIOBUTTON, self.set_video_quality)
 
         self.start_button.Bind(wx.EVT_BUTTON, self.on_start)
         self.stop_button.Bind(wx.EVT_BUTTON, self.on_stop)
@@ -199,9 +207,10 @@ class AppGui:
                     # Checks that the show is in the user favourite list and that the title has not been previously
                     # downloaded, such info is stored in the observed_shows array
                     if (filtered_title in self.frame.favourite_shows) and (full_title not in self.frame.observed_shows):
-                        # magnet_link = child.find('{http://xmlns.ezrss.it/0.1/}magnetURI').text
-                        # os.startfile(magnet_link)
-                        self.update_observed_list(full_title)
+                        if self.frame.video_quality in title or self.frame.video_quality == '480':
+                            # magnet_link = child.find('{http://xmlns.ezrss.it/0.1/}magnetURI').text
+                            # os.startfile(magnet_link)
+                            self.update_observed_list(full_title)
 
         elif is_vpn_active:
             wx.MessageBox('There are no shows in your list. Please make sure to add at least one.',
@@ -331,6 +340,14 @@ class AppGui:
             self.tv_show_text_area.SetValue('')
             self.frame.favourite_shows = []
 
+    def set_video_quality(self, event):
+        if self.low_quality.GetValue():
+            self.frame.video_quality = '480'
+        elif self.medium_quality.GetValue():
+            self.frame.video_quality = '720'
+        else:
+            self.frame.video_quality = '1080'
+
 
 class WindowClass(wx.Frame):
 
@@ -338,11 +355,11 @@ class WindowClass(wx.Frame):
         super(WindowClass, self).__init__(*args, **kwargs)
 
         self.vpn = ''
-        self.quality = ''
-        self.use_vpn = True
-        self.config_changed = False
+        self.video_quality = ''
         self.favourite_shows = []
         self.observed_shows = []
+        self.use_vpn = True
+        self.config_changed = False
         self.start_up = True
 
         self.gui = AppGui(self)
@@ -373,5 +390,5 @@ def request_xml(site):
 
 if __name__ == '__main__':
     app = wx.App()
-    WindowClass(None, title='Tv Show Feed Reader', size=(595, 350), style=wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER)
+    WindowClass(None, title='Tv Show Feed Reader', size=(595, 370), style=wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER)
     app.MainLoop()
