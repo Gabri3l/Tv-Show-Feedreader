@@ -4,11 +4,10 @@ import urllib2
 import re
 import xml.etree.ElementTree as ET
 import os
+import threading
 from mail_ico import getIcon
 
 
-# TODO: If running continuously it should check the feed every 24 hours
-# TODO: Add video quality preference (720 or normal)
 class MailIcon(wx.TaskBarIcon):
     TB_MENU_RESTORE = wx.NewId()
     TB_MENU_CLOSE = wx.NewId()
@@ -67,13 +66,13 @@ class AppGui:
         file_menu = wx.Menu()
         save_config_item = wx.MenuItem(file_menu, wx.ID_SAVE, "Save config",
                                        "This will save the current configuration.")
-        # load_config_item = wx.MenuItem(file_menu, wx.ID_OPEN, "Load config",
-        #                                "This will load a configuration from file.")
+        load_config_item = wx.MenuItem(file_menu, wx.ID_OPEN, "Load config",
+                                       "This will load a configuration from file.")
         clear_cache_item = wx.MenuItem(file_menu, self.ID_CLEAR_CACHE, "Clear cache",
                                        "This will clear the list of previously downloaded shows.")
         close_app_item = wx.MenuItem(file_menu, wx.ID_EXIT, "Close", "Close the application.")
         file_menu.AppendItem(save_config_item)
-        # file_menu.AppendItem(load_config_item)
+        file_menu.AppendItem(load_config_item)
         file_menu.AppendItem(clear_cache_item)
         file_menu.AppendSeparator()
         file_menu.AppendItem(close_app_item)
@@ -81,6 +80,7 @@ class AppGui:
 
         # File menu bindings
         frame.Bind(wx.EVT_MENU, self.save_config, save_config_item)
+        frame.Bind(wx.EVT_MENU, self.load_config, load_config_item)
         frame.Bind(wx.EVT_MENU, self.clear_observed_list, clear_cache_item)
         frame.Bind(wx.EVT_MENU, self.on_quit, close_app_item)
         frame.Bind(wx.EVT_CLOSE, self.on_quit)
@@ -132,6 +132,7 @@ class AppGui:
         self.stop_button.Bind(wx.EVT_BUTTON, self.on_stop)
 
         # Execution
+        self.timer = threading.Timer(self.frame.period, self.on_start, [None])
         self.load_config(None)
         self.load_observed_list()
         self.frame.start_up = False
@@ -184,6 +185,8 @@ class AppGui:
     #                                                       #
     #########################################################
     def on_start(self, event):
+        self.frame.run = True
+
         if self.frame.use_vpn:
             is_vpn_active = self.check_vpn(event)
         else:
@@ -208,16 +211,17 @@ class AppGui:
                     # downloaded, such info is stored in the observed_shows array
                     if (filtered_title in self.frame.favourite_shows) and (full_title not in self.frame.observed_shows):
                         if self.frame.video_quality in title or self.frame.video_quality == '480':
-                            # magnet_link = child.find('{http://xmlns.ezrss.it/0.1/}magnetURI').text
-                            # os.startfile(magnet_link)
+                            magnet_link = child.find('{http://xmlns.ezrss.it/0.1/}magnetURI').text
+                            os.startfile(magnet_link)
                             self.update_observed_list(full_title)
 
         elif is_vpn_active:
             wx.MessageBox('There are no shows in your list. Please make sure to add at least one.',
                           'No shows found.', wx.OK | wx.ICON_INFORMATION)
+        self.timer.start()
 
     def on_stop(self, event):
-        pass
+        self.timer.cancel()
 
     def on_quit(self, event):
         if self.frame.config_changed and (self.frame.vpn != '' or len(self.frame.favourite_shows) > 0):
@@ -354,6 +358,7 @@ class WindowClass(wx.Frame):
     def __init__(self, *args, **kwargs):
         super(WindowClass, self).__init__(*args, **kwargs)
 
+        self.period = 12
         self.vpn = ''
         self.video_quality = ''
         self.favourite_shows = []
