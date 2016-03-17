@@ -18,7 +18,9 @@ Or just dowload `tv_show_feedreader.zip` and run the executable. It is a standal
 The tv show feedreader retrieves the daily eztv feed and parses the JSON file to extract the necessary info about your favorite shows. Since all of this happens *behind the curtains* the final user has no say in it. There are a few important options that can be manually set up through the GUI.
 
 * **VPN Section**: Here you can specify if you are going to use a VPN or not, and allows you to specify exactly the executable for your VPN. Keep in mind that this will only allow the software to check if the VPN app you are using is currently running but it does not check if the connection of the device you are using is currently protected by a VPN. You need to make sure that the VPN is actually properly connected on your own.
+![vpn section](https://raw.githubusercontent.com/Gabri3l/Tv-Show-Feedreader/master/images/tv-show-feedreader-1.PNG)
 * **TV Show Section**: Here you can list all of the shows you are following or interested in, along with your favorite resolution (480p, 720p or 1080p). Another note here, the software currently only check if the resolution selected is available, if not the download will not start.
+![tv show section](https://raw.githubusercontent.com/Gabri3l/Tv-Show-Feedreader/master/images/tv-show-feedreader-2.PNG)
 
 Once the **Start** button is pressed, the software will download and check the xml file every 12 hours. If a specific episode has already been downloaded, it will not start its download again.
 
