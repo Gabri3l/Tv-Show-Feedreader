@@ -13,7 +13,11 @@ There is no special installation required, you can just download or fork the pro
 
 `python tv_show_feedreader.py`
 
-Or just dowload `tv_show_feedreader.zip` and run the executable. It is a standalone portable software so no installation process is necessary.
+Or just dowload `tv_show_feedreader.zip` and run the executable. It is a standalone portable software so no installation process is necessary. Alternatively you can compile the source file and make it an executable yourself using a tool such as `py2exe`, the setup file is already provided so, once you installe `py2exe` you can simply use your terminal as follows:
+
+`python path/to/project/setup.py py2exe`
+
+Further documentation abou this tool can be found here [py2exe.org](http://www.py2exe.org/)
 # Usage & Bugs
 The tv show feedreader retrieves the daily eztv feed and parses the JSON file to extract the necessary info about your favorite shows. Since all of this happens *behind the curtains* the final user has no say in it. There are a few important options that can be manually set up through the GUI.
 
