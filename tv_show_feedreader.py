@@ -31,7 +31,11 @@ import os
 import threading
 
 
-class MailIcon(wx.TaskBarIcon):
+class TicketIcon(wx.TaskBarIcon):
+    """
+    This class handles the TaskBar icon and menu. It uses a frame object passed as an argument
+    to bind some functionalities to the menu on right click.
+    """
     TB_MENU_RESTORE = wx.NewId()
     TB_MENU_CLOSE = wx.NewId()
     TB_MENU_START = wx.NewId()
@@ -41,8 +45,8 @@ class MailIcon(wx.TaskBarIcon):
         wx.TaskBarIcon.__init__(self)
         self.frame = frame
 
-        # Set the image
-        self.SetIcon(wx.IconFromBitmap(wx.Bitmap('icon.ico')), "Tv Show Feed Reader")
+        # Set the icon image
+        self.SetIcon(wx.IconFromBitmap(wx.Bitmap('ticket.ico')), "Tv Show Feed Reader")
 
         # Bind some events
         self.Bind(wx.EVT_MENU, self.on_restore, id=self.TB_MENU_RESTORE)
@@ -72,6 +76,10 @@ class MailIcon(wx.TaskBarIcon):
 
 
 class AppGui:
+    """
+    AppGui handles everything about the gui and its functionalities, it will attach every GUI item
+    to the frame passed as an argument, and bind specific methods to interactions with such elements.
+    """
 
     ID_CLEAR_CACHE = wx.NewId()
 
@@ -153,7 +161,7 @@ class AppGui:
         self.stop_button.Bind(wx.EVT_BUTTON, self.on_stop)
 
         # Execution
-        self.timer = threading.Timer(self.frame.period, self.on_start, [None])
+        self.timer = None
         self.load_config(None)
         self.load_observed_list()
         self.frame.start_up = False
@@ -164,6 +172,11 @@ class AppGui:
     #                                                       #
     #########################################################
     def on_find_vpn_path(self, event):
+        """
+        It opens a file dialog where the user can then select the executable file to monitor.
+        Such path is then saved in the vpn text area.
+        :param event: default parameter, it represents the event triggering this method
+        """
         open_file_dialog = wx.FileDialog(self.frame, "Open", "", "",
                                          "Executables (*.exe)|*.exe",
                                          wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
@@ -178,6 +191,11 @@ class AppGui:
         self.frame.vpn = ''
 
     def check_vpn(self, event):
+        """
+        Checks if the executable file monitored is actually in execution. It does not check if the VPN is currently
+        activated or not.
+        :param event: default parameter, it represents the event triggering this method
+        """
         vpn_app = self.vpn_text_area.GetValue()  # This value needs to be filtered with a regex
         is_vpn_active = False
         if vpn_app == '' or vpn_app == 'Please provide a valid application path':
@@ -206,8 +224,13 @@ class AppGui:
     #                                                       #
     #########################################################
     def on_start(self, event):
-        self.frame.run = True
-
+        """
+        If the user requests to use a VPN it calls the check_vpn method. On success it will retrieve the JSON file
+        from the tv show feed. Such file is parsed and magnet links are opened if the show is in the user favourite
+        list and it has not been downloaded before. After the feed has been checked it will start a timer, such timer
+        allows to run this method again after an amount of time specified in frame.period.
+        :param event: default parameter, it represents the event triggering this method
+        """
         if self.frame.use_vpn:
             is_vpn_active = self.check_vpn(event)
         else:
@@ -239,10 +262,13 @@ class AppGui:
         elif is_vpn_active:
             wx.MessageBox('There are no shows in your list. Please make sure to add at least one.',
                           'No shows found.', wx.OK | wx.ICON_INFORMATION)
+        # Starts the timer for periodic execution
+        self.timer = threading.Timer(self.frame.period, self.on_start, [None])
         self.timer.start()
 
     def on_stop(self, event):
-        self.timer.cancel()
+        if self.timer and self.timer.is_active():
+            self.timer.cancel()
 
     def on_quit(self, event):
         if self.frame.config_changed and (self.frame.vpn != '' or len(self.frame.favourite_shows) > 0):
@@ -304,6 +330,9 @@ class AppGui:
             with open('observed.dat', 'r') as f:
                 self.frame.observed_shows = f.readline().split(';')
         except IOError:
+            # This error does not need any specific handling for now, if the file is
+            # missing it means that it has not been created before or the user deleted it
+            # manually.
             pass
 
     def clear_observed_list(self, event):
@@ -375,21 +404,23 @@ class AppGui:
 
 
 class WindowClass(wx.Frame):
-
+    """
+    This class that represents the main frame of the app
+    """
     def __init__(self, *args, **kwargs):
         super(WindowClass, self).__init__(*args, **kwargs)
 
-        self.period = 12
-        self.vpn = ''
+        self.period = 12  # Amount of time between to consecutive execution of the method on_start
+        self.vpn = ''  # Name of the VPN executable to observe
         self.video_quality = ''
         self.favourite_shows = []
-        self.observed_shows = []
+        self.observed_shows = []  # List of shows that have already been dowloaded
         self.use_vpn = True
         self.config_changed = False
         self.start_up = True
 
         self.gui = AppGui(self)
-        self.tbIcon = MailIcon(self)
+        self.tbIcon = TicketIcon(self)
 
         self.Center()
         self.Show()

@@ -13,7 +13,7 @@ setup(
     windows=[
         {
             "script": "tv_show_feedreader.py",
-            "icon_resources": [(0, "icon.ico")]
+            "icon_resources": [(0, "ticket.ico")]
         }
     ]
     # options={'py2exe': {'bundle_files': 1}},
