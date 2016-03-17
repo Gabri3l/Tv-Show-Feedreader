@@ -24,7 +24,7 @@ The tv show feedreader retrieves the daily eztv feed and parses the JSON file to
 
 Once the **Start** button is pressed, the software will download and check the xml file every 12 hours. If a specific episode has already been downloaded, it will not start its download again.
 
-About the **downloading** aspect, this application will open the magnet links ![magnet icon](https://raw.githubusercontent.com/Gabri3l/Tv-Show-Feedreader/master/images/magnet.png) using the default system associated software. The app is not a torrent client, this app will invoke your torrent client automatically once a new episode is out.
+About the **downloading** aspect, this application will open the magnet links ![magnet icon](https://raw.githubusercontent.com/Gabri3l/Tv-Show-Feedreader/master/images/magnet.png) using the default software used by your OS. The app is not a torrent client, this app will invoke your torrent client automatically once a new episode is out.
 
 The way the app knows if an episode has been downloaded is by saving in a local file the name of the show and the episode number, as soon as the magnet link has been activated. Naturally this local file can be emptied through the **File** menu.
 
