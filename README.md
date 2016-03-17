@@ -1,7 +1,7 @@
 # Tv-Show-Feedreader
 The Tv-Show-Feedreader app uses [eztv](https://eztv.ag/) feeds to be notified when your favourite shows come out. It is a very lightweight software that allows you to build your own list of favorite shows to automatically be downloaded as soon as they come out.
 
-The project was born with research purposes to play with python GUIs. Its primary goal was to build a simple utility very easy to use with no particular expectations.
+The project was born with research purposes to play with python GUIs. Its primary goal was to build a simple utility very easy to use with no particular expectations. It does not, by any mean, promote the download of any video material unless the user owns the original copy or any form of legal right of ownership.
 
 # Documentation
 There is no official documentation for this project, it is completely written in Python and runs in Windows 10 (x64). The code includes sufficient commentary to understand the structure and functionalities of the software.
